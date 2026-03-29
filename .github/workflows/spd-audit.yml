@@ -29,22 +29,24 @@ jobs:
         run: |
           python3 app.py & 
           sleep 20 # Extra time for the server to bind to port 5000
-
-      # 5. OWASP ZAP DAST Scan
+     # 5. OWASP ZAP DAST Scan
       - name: OWASP ZAP DAST Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: 'http://localhost:5000'
-          # CRITICAL: This generates the specific file for your upload step
-          artifact_name: 'zap_report.html'
+          # This forces ZAP to output a file named 'report.html' in the current directory
+          cmd_options: '-r report.html'
           fail_action: false
 
       # 6. Final step to save the results
       - name: Upload Security Reports
         uses: actions/upload-artifact@v4
-        if: always() # Ensures reports upload even if scans find bugs
+        if: always() 
         with:
           name: spd-security-reports
           path: |
+            bandit_report.txt
+            report.html
+      
             bandit_report.txt
             zap_report.html
