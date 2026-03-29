@@ -29,18 +29,20 @@ jobs:
         run: |
           python3 app.py & 
           sleep 20 # Extra time for the server to bind to port 5000
-     # 5. OWASP ZAP DAST Scan
+     # 5. OWASP ZAP DAST Scan (Fixed with Mapping)
       - name: OWASP ZAP DAST Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
+          token: ${{ github.token }}
           target: 'http://localhost:5000'
-          # Force the report name and location
+          # Use /github/workspace/ to force it into the visible folder
           cmd_options: '-r zap_report.html'
           fail_action: false
 
-      # 6. Check if file exists (For Debugging)
-      - name: Check for reports
-        run: ls -R
+      # 6. Verify and Fix Permissions (Mandatory for Docker files)
+      - name: Fix Permissions
+        if: always()
+        run: sudo chown -R $USER:$USER . && ls -l zap_report.html
 
       # 7. Final step to save the results
       - name: Upload Security Reports
