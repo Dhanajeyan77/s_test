@@ -11,34 +11,40 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      
+
+      # 2. Install Dependencies
       - name: Install Dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install flask bandit
           if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
-      # 3. SAST Scan
-      - name: SAST Scan (python)
-        run: bandit -r . -f txt -o bandit_report.txt || true
 
-      # 4. Start Application in Background
+      # 3. SAST Scan (Bandit)
+      - name: SAST Scan (python)
+        run: |
+          bandit -r . -f txt -o bandit_report.txt || true
+
+      # 4. Start Application in Background (DAST Staging)
       - name: Start Application (DAST Staging)
         run: |
           python3 app.py & 
-          sleep 15 # Increased sleep to ensure server is fully UP
+          sleep 20 # Extra time for the server to bind to port 5000
 
       # 5. OWASP ZAP DAST Scan
       - name: OWASP ZAP DAST Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: 'http://localhost:5000'
+          # CRITICAL: This generates the specific file for your upload step
+          artifact_name: 'zap_report.html'
+          fail_action: false
 
-      # Final step to save the results
+      # 6. Final step to save the results
       - name: Upload Security Reports
         uses: actions/upload-artifact@v4
+        if: always() # Ensures reports upload even if scans find bugs
         with:
           name: spd-security-reports
           path: |
             bandit_report.txt
             zap_report.html
-    
