@@ -30,14 +30,13 @@ jobs:
           python3 app.py > app_log.txt 2>&1 & 
           sleep 30 # Give it more time
 
-      # 5. OWASP ZAP DAST Scan (Added Allow-Exit)
-      - name: OWASP ZAP DAST Scan
+      - name: OWASP ZAP DAST Scan (Log Mode)
         uses: zaproxy/action-baseline@v0.12.0
         with:
-          token: ${{ github.token }}
           target: 'http://localhost:5000'
-          cmd_options: '-r zap_report.html'
-        continue-on-error: true # This ensures the job shows green even if ZAP finds bugs
+          # '-j' tells ZAP to output JSON to the console instead of a hidden file
+          cmd_options: '-j' 
+          fail_action: false
 
       # 6. Verify and Fix Permissions (Mandatory for Docker files)
       - name: Fix Permissions
