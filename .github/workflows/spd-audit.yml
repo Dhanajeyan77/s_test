@@ -6,51 +6,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # 1. Setup Python Environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # 2. Install Dependencies
       - name: Install Dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install flask bandit
           if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
 
-      # 3. SAST Scan (Bandit)
       - name: SAST Scan (python)
         run: |
           bandit -r . -f txt -o bandit_report.txt || true
 
-     # 4. Start Application (Improved with Logging)
       - name: Start Application
         run: |
           python3 app.py > app_log.txt 2>&1 & 
-          sleep 30 # Give it more time
+          sleep 30 
 
-      - name: OWASP ZAP DAST Scan (Log Mode)
+      - name: OWASP ZAP DAST Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
+          token: ${{ github.token }}
           target: 'http://localhost:5000'
-          # '-j' tells ZAP to output JSON to the console instead of a hidden file
-          cmd_options: '-j' 
+          # ZAP handles its own upload here
+          artifact_name: 'zap-report'
           fail_action: false
 
-      # 6. Verify and Fix Permissions (Mandatory for Docker files)
-      - name: Fix Permissions
-        if: always()
-        run: sudo chown -R $USER:$USER . && ls -l zap_report.html
-
-      # 7. Final step to save the results
-      - name: Upload Security Reports
+      - name: Upload Bandit Report
         uses: actions/upload-artifact@v4
-        if: always() 
+        if: always()
         with:
-          name: spd-audit-package
-          path: |
-            bandit_report.txt
-            zap_report.html
-            bandit_report.txt
-            zap_report.html
+          name: bandit-results
+          path: bandit_report.txt
