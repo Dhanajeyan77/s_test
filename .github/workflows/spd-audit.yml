@@ -34,19 +34,22 @@ jobs:
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: 'http://localhost:5000'
-          # This forces ZAP to output a file named 'report.html' in the current directory
-          cmd_options: '-r report.html'
+          # Force the report name and location
+          cmd_options: '-r zap_report.html'
           fail_action: false
 
-      # 6. Final step to save the results
+      # 6. Check if file exists (For Debugging)
+      - name: Check for reports
+        run: ls -R
+
+      # 7. Final step to save the results
       - name: Upload Security Reports
         uses: actions/upload-artifact@v4
         if: always() 
         with:
-          name: spd-security-reports
+          name: spd-audit-package
           path: |
             bandit_report.txt
-            report.html
-      
+            zap_report.html
             bandit_report.txt
             zap_report.html
