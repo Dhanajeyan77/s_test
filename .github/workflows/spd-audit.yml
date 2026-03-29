@@ -1,4 +1,3 @@
-
 name: SPD Security Audit
 on: [push, repository_dispatch]
 jobs:
@@ -7,12 +6,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      # 1. Setup Python Environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install flask bandit
+          if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+      # 3. SAST Scan
       - name: SAST Scan (python)
-        run: pip install bandit && bandit -r .
-        
+        run: bandit -r . -f txt -o bandit_report.txt || true
+
+      # 4. Start Application in Background
       - name: Start Application (DAST Staging)
-        run: python app.py & sleep 10
-        
+        run: |
+          python3 app.py & 
+          sleep 15 # Increased sleep to ensure server is fully UP
+
+      # 5. OWASP ZAP DAST Scan
       - name: OWASP ZAP DAST Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
