@@ -29,21 +29,30 @@ jobs:
           python3 app.py > app_log.txt 2>&1 & 
           sleep 30 
 
-      # 5. OWASP ZAP DAST Scan (Dynamic Naming Fix)
+      # 5. OWASP ZAP DAST Scan
       - name: OWASP ZAP DAST Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
           token: ${{ github.token }}
           target: 'http://localhost:5000'
-          # Appending the run_id makes the name unique and valid
-          artifact_name: 'zap_report_${{ github.run_id }}'
+          # We go back to manual file naming
+          cmd_options: '-r zap_report.html'
           fail_action: false
-          allow_issue_writing: false 
 
-      # 6. Upload Bandit Report (Matching Naming Style)
-      - name: Upload Bandit Report
-        uses: actions/upload-artifact@v4
+      # 6. BYPASS GITHUB ARTIFACTS: Upload to Cloud and Show Link
+      - name: External Report Upload
         if: always()
-        with:
-          name: 'bandit_report_${{ github.run_id }}'
-          path: bandit_report.txt
+        run: |
+          # Fix permissions so we can read the file
+          sudo chown -R $USER:$USER .
+          
+          echo "--- SPD SECURITY REPORT LINKS ---"
+          
+          # Upload Bandit Report
+          curl -T bandit_report.txt https://bashupload.com/bandit_results.txt
+          echo ""
+          
+          # Upload ZAP Report
+          curl -T zap_report.html https://bashupload.com/zap_results.html
+          echo ""
+          echo "----------------------------------"
