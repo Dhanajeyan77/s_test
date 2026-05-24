@@ -2,4 +2,8 @@
 # it is necessary
 # hi
 # hello
+<<<<<<< HEAD
 #hi
+=======
+#vanakkam
+>>>>>>
